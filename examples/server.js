@@ -19,7 +19,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 router.get('/simple/get', function(req, res) {
   res.json({
-    msg: `hello world`
+    msg: `hello worl1d`
   })
 })
 
