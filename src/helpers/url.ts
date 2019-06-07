@@ -4,13 +4,13 @@
  * @Last Modified by: wusiyuan.sonny
  * @Last Modified time: 2019-05-07 11:04:19
  */
-
+import { forEach, isObject, isDate } from '../utils'
 /**
  *
  * @param url url
  * delete 哈希标记    /test#hash, {foo: bar}         => `/test?foo=bar`
  */
-const deleteHash = (url:string): string => {
+const deleteHash = (url: string): string => {
   const index = url.indexOf('#')
   return index !== -1 ? url.substr(0, index) : url
 }
@@ -21,7 +21,7 @@ const deleteHash = (url:string): string => {
  * 特殊字符支持:      /tset, {foo: '@:$, '}          => `/test?foo=@:$+`
  * 注意，我们会把空格转换成+
  */
-const encodeUrl = (url: string):string =>{
+const encode = (url: string): string => {
   return encodeURIComponent(url)
     .replace(/%40/g, '@')
     .replace(/%3A/gi, ':')
@@ -46,17 +46,38 @@ const encodeUrl = (url: string):string =>{
  *       delete哈希标记    /test#hash, {foo: bar}         => `/test?foo=bar`
  * TODO: 保留已存在的参数   /test?foo=bar, {bar: 'baz' }    => `/test?foo=bar&bar=baz`
  */
-export const buildURL = (url: string, params?: any): string => {
-  url = deleteHash(url)
-  if(!params){
+export const bulidURL = (url: string, params?: any): string => {
+  if (!params) {
     // delete 哈希标记
     return url
   }
-
-
-  // 特殊字符支持
-  url = encodeUrl(url)
+  let serializedParams
+  let parts: string[] = []
+  forEach(params, (val, key = '') => {
+    if (val == null) {
+      return
+    }
+    if (Array.isArray(val)) {
+      key = key + '[]'
+    } else {
+      val = [val]
+    }
+    forEach(val, v => {
+      if (isObject(v)) {
+        v = JSON.stringify(v)
+      } else if (isDate(v)) {
+        v = v.toISOString()
+      }
+      parts.push(encode(key) + '=' + encode(v))
+    })
+  })
+  serializedParams = parts.join('&')
+  if (serializedParams) {
+    const hashmarkIndex = url.indexOf('#')
+    if (hashmarkIndex !== -1) {
+      url = url.slice(0, hashmarkIndex)
+    }
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams
+  }
   return url
 }
-
-
